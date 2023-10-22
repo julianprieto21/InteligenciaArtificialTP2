@@ -6,6 +6,12 @@ MAX_POOL_SIZE = 5
 CONVOLUTION_SIZE = 4
 CONVOLUTION_FILTERS = 2
 
+# Consultas
+#
+# 1. ¿Que es exactamente lo que pide el punto 2?
+# 2. ¿Como devolver un gradiente de la perdida con respecto a x
+
+
 def forward_softmax(x):
     """
     Calcula la función softmax para un solo ejemplo.
@@ -21,10 +27,11 @@ def forward_softmax(x):
     Salida:
         un array de floats numpy 1d  que contiene los resultados de softmax.
     """
-    x = x - np.max(x,axis=0)
+    x = x - np.max(x, axis=0)
     exp = np.exp(x)
-    s = exp / np.sum(exp,axis=0)
+    s = exp / np.sum(exp, axis=0)
     return s
+
 
 def backward_softmax(x, grad_outputs):
     """
@@ -39,10 +46,11 @@ def backward_softmax(x, grad_outputs):
     Salida:
         un vector floats numpy 1d de la misma forma que x con la derivada de la pérdida con respecto a x
     """
-    
 
     # *** EMPEZAR CÓDIGO AQUÍ ***
+
     # *** TERMINAR CÓDIGO AQUÍ ***
+
 
 def forward_relu(x):
     """
@@ -54,9 +62,10 @@ def forward_relu(x):
     Return:
         un vector floats numpy con el resultado de ReLU
     """
-    x[x<=0] = 0
+    x[x <= 0] = 0
 
     return x
+
 
 def backward_relu(x, grad_outputs):
     """
@@ -73,6 +82,7 @@ def backward_relu(x, grad_outputs):
 
     # *** EMPEZAR CÓDIGO AQUÍ ***
     # *** TERMINAR CÓDIGO AQUÍ ***
+
 
 def get_initial_params():
     """
@@ -92,8 +102,8 @@ def get_initial_params():
     La varianza de esa distribución debe ser 1/sqrt(n) donde n es el número de neuronas que alimenta una salida para esa capa.
 
     Los vectores de bias deben inicializarse con cero.
-    
-    
+
+
     Return:
          Un dict mapeando nombres de parámetros a arrays numpy
     """
@@ -104,11 +114,15 @@ def get_initial_params():
     num_hidden = size_after_max_pooling * size_after_max_pooling * CONVOLUTION_FILTERS
 
     return {
-        'W1': np.random.normal(size = (CONVOLUTION_FILTERS, 1, CONVOLUTION_SIZE, CONVOLUTION_SIZE), scale=1/ math.sqrt(CONVOLUTION_SIZE * CONVOLUTION_SIZE)),
-        'b1': np.zeros(CONVOLUTION_FILTERS),
-        'W2': np.random.normal(size = (num_hidden, 10), scale = 1/ math.sqrt(num_hidden)),
-        'b2': np.zeros(10)
+        "W1": np.random.normal(
+            size=(CONVOLUTION_FILTERS, 1, CONVOLUTION_SIZE, CONVOLUTION_SIZE),
+            scale=1 / math.sqrt(CONVOLUTION_SIZE * CONVOLUTION_SIZE),
+        ),
+        "b1": np.zeros(CONVOLUTION_FILTERS),
+        "W2": np.random.normal(size=(num_hidden, 10), scale=1 / math.sqrt(num_hidden)),
+        "b2": np.zeros(10),
     }
+
 
 def forward_convolution(conv_W, conv_b, data):
     """
@@ -130,15 +144,25 @@ def forward_convolution(conv_W, conv_b, data):
 
     input_channels, input_width, input_height = data.shape
 
-    output = np.zeros((conv_channels, input_width - conv_width + 1, input_height - conv_height + 1))
+    output = np.zeros(
+        (conv_channels, input_width - conv_width + 1, input_height - conv_height + 1)
+    )
 
     for x in range(input_width - conv_width + 1):
         for y in range(input_height - conv_height + 1):
             for output_channel in range(conv_channels):
-                output[output_channel, x, y] = np.sum(
-                    np.multiply(data[:, x:(x + conv_width), y:(y + conv_height)], conv_W[output_channel, :, :, :])) + conv_b[output_channel]
+                output[output_channel, x, y] = (
+                    np.sum(
+                        np.multiply(
+                            data[:, x : (x + conv_width), y : (y + conv_height)],
+                            conv_W[output_channel, :, :, :],
+                        )
+                    )
+                    + conv_b[output_channel]
+                )
 
     return output
+
 
 def backward_convolution(conv_W, conv_b, data, output_grad):
     """
@@ -154,8 +178,10 @@ def backward_convolution(conv_W, conv_b, data, output_grad):
         El tercer elemento es el gradiente de la pérdida con respecto a los datos de entrada.
     """
 
-   # *** EMPEZAR CÓDIGO AQUÍ ***
-   # *** TERMINAR CÓDIGO AQUÍ ***
+
+# *** EMPEZAR CÓDIGO AQUÍ ***
+# *** TERMINAR CÓDIGO AQUÍ ***
+
 
 def forward_max_pool(data, pool_width, pool_height):
     """
@@ -172,15 +198,19 @@ def forward_max_pool(data, pool_width, pool_height):
         El resultado de la capa max pooling
     """
     input_channels, input_width, input_height = data.shape
-    
-    output = np.zeros((input_channels, input_width // pool_width, input_height // pool_height))
+
+    output = np.zeros(
+        (input_channels, input_width // pool_width, input_height // pool_height)
+    )
 
     for x in range(0, input_width, pool_width):
         for y in range(0, input_height, pool_height):
-
-            output[:, x // pool_width, y // pool_height] = np.amax(data[:, x:(x + pool_width), y:(y + pool_height)], axis=(1, 2))
+            output[:, x // pool_width, y // pool_height] = np.amax(
+                data[:, x : (x + pool_width), y : (y + pool_height)], axis=(1, 2)
+            )
 
     return output
+
 
 def backward_max_pool(data, pool_width, pool_height, output_grad):
     """
@@ -189,14 +219,15 @@ def backward_max_pool(data, pool_width, pool_height, output_grad):
     los datos son de la forma (# canales, ancho, alto)
     output_grad tiene forma (# canales, ancho // pool_width, alto // pool_height)
 
-    output_grad es el gradiente de la pérdida con respecto a la salida del backward de la capa max pooling 
+    output_grad es el gradiente de la pérdida con respecto a la salida del backward de la capa max pooling
 
     Returns:
         El gradiente de la pérdida con respecto a los datos (mismo tamaño que los datos)
     """
-    
+
     # *** EMPEZAR CÓDIGO AQUÍ ***
     # *** TERMINAR CÓDIGO AQUÍ ***
+
 
 def forward_cross_entropy_loss(probabilities, labels):
     """
@@ -219,6 +250,7 @@ def forward_cross_entropy_loss(probabilities, labels):
 
     return result
 
+
 def backward_cross_entropy_loss(probabilities, labels):
     """
     Calcule el gradiente de la entropía cruzada con respecto a las probabilidades.
@@ -235,6 +267,7 @@ def backward_cross_entropy_loss(probabilities, labels):
     # *** EMPEZAR CÓDIGO AQUÍ ***
     # *** TERMINAR CÓDIGO AQUÍ ***
 
+
 def forward_linear(weights, bias, data):
     """
     Calcule la salida de una capa lineal con los pesos, el bias y los datos proporcionados.
@@ -248,6 +281,7 @@ def forward_linear(weights, bias, data):
         El resultado de la capa lineal.
     """
     return data.dot(weights) + bias
+
 
 def backward_linear(weights, bias, data, output_grad):
     """
@@ -266,10 +300,11 @@ def backward_linear(weights, bias, data, output_grad):
     # *** EMPEZAR CÓDIGO AQUÍ ***
     # *** TERMINAR CÓDIGO AQUÍ ***
 
+
 def forward_prop(data, labels, params):
     """
     Implemente la pasada foward dados los datos, las etiquetas y los parámetros.
-    
+
     Argumentos:
         datos: un numpy array que contiene la entrada (tamaño 1 por 28 por 28)
         etiquetas: un numpy array 1d que contiene las etiquetas (tamaño 10)
@@ -284,17 +319,17 @@ def forward_prop(data, labels, params):
             2. La pérdida promedio para estos datos
     """
 
-    W1 = params['W1']
-    b1 = params['b1']
-    W2 = params['W2']
-    b2 = params['b2']
+    W1 = params["W1"]
+    b1 = params["b1"]
+    W2 = params["W2"]
+    b2 = params["b2"]
 
     first_convolution = forward_convolution(W1, b1, data)
     first_max_pool = forward_max_pool(first_convolution, MAX_POOL_SIZE, MAX_POOL_SIZE)
     first_after_relu = forward_relu(first_max_pool)
 
     flattened = np.reshape(first_after_relu, (-1))
-    
+
     logits = forward_linear(W2, b2, flattened)
 
     y = forward_softmax(logits)
@@ -302,10 +337,11 @@ def forward_prop(data, labels, params):
 
     return y, cost
 
+
 def backward_prop(data, labels, params):
     """
     Implementar el cálculo del gradiente para una red neuronal. Es decir la pasada backward completa.
-    
+
     Argumentos:
         datos: un array numpy que contiene la entrada para un solo ejemplo
         etiquetas: un array numpy 1d que contiene las etiquetas para un solo ejemplo
@@ -317,13 +353,14 @@ def backward_prop(data, labels, params):
     Returns:
         Un diccionario de strings a arrays de numpy donde cada clave representa el nombre de un peso
         y los valores representan el gradiente de la pérdida con respecto a ese peso.
-        
+
         En particular, debe tener 4 elementos:
             W1, W2, b1 y b2
     """
 
     # *** EMPEZAR CÓDIGO AQUÍ ***
     # *** TERMINAR CÓDIGO AQUÍ ***
+
 
 def forward_prop_batch(batch_data, batch_labels, params, forward_prop_func):
     """Aplique prop foward a cada imagen en un lote"""
@@ -338,9 +375,12 @@ def forward_prop_batch(batch_data, batch_labels, params, forward_prop_func):
 
     return np.array(y_array), np.array(cost_array)
 
-def gradient_descent_batch(batch_data, batch_labels, learning_rate, params, backward_prop_func):
+
+def gradient_descent_batch(
+    batch_data, batch_labels, learning_rate, params, backward_prop_func
+):
     """
-    Realice un descenso por gradiente de un lote de datos de entrenamiento proporcionados, 
+    Realice un descenso por gradiente de un lote de datos de entrenamiento proporcionados,
     utilizando la tasa de aprendizaje proporcionada.
 
     Este código debería actualizar los parámetros almacenados en params.
@@ -359,29 +399,34 @@ def gradient_descent_batch(batch_data, batch_labels, learning_rate, params, back
     total_grad = {}
 
     for i in range(batch_data.shape[0]):
-        grad = backward_prop_func(
-            batch_data[i, :, :],
-            batch_labels[i, :],
-            params)
+        grad = backward_prop_func(batch_data[i, :, :], batch_labels[i, :], params)
         for key, value in grad.items():
             if key not in total_grad:
                 total_grad[key] = np.zeros(value.shape)
 
             total_grad[key] += value
 
-    params['W1'] = params['W1'] - learning_rate * total_grad['W1']
-    params['W2'] = params['W2'] - learning_rate * total_grad['W2']
-    params['b1'] = params['b1'] - learning_rate * total_grad['b1']
-    params['b2'] = params['b2'] - learning_rate * total_grad['b2']
+    params["W1"] = params["W1"] - learning_rate * total_grad["W1"]
+    params["W2"] = params["W2"] - learning_rate * total_grad["W2"]
+    params["b1"] = params["b1"] - learning_rate * total_grad["b1"]
+    params["b2"] = params["b2"] - learning_rate * total_grad["b2"]
 
     # Esta funcióno no devuelve nada
     return
 
-def nn_train(
-    train_data, train_labels, dev_data, dev_labels,
-    get_initial_params_func, forward_prop_func, backward_prop_func,
-    learning_rate=5.0, batch_size=16, num_batches=400):
 
+def nn_train(
+    train_data,
+    train_labels,
+    dev_data,
+    dev_labels,
+    get_initial_params_func,
+    forward_prop_func,
+    backward_prop_func,
+    learning_rate=5.0,
+    batch_size=16,
+    num_batches=400,
+):
     m = train_data.shape[0]
 
     params = get_initial_params_func()
@@ -389,85 +434,102 @@ def nn_train(
     cost_dev = []
     accuracy_dev = []
     for batch in range(num_batches):
-        print('Procesando actualmente {} / {}'.format(batch, num_batches))
+        print("Procesando actualmente {} / {}".format(batch, num_batches))
 
-        batch_data = train_data[batch * batch_size:(batch + 1) * batch_size, :, :, :]
-        batch_labels = train_labels[batch * batch_size: (batch + 1) * batch_size, :]
+        batch_data = train_data[batch * batch_size : (batch + 1) * batch_size, :, :, :]
+        batch_labels = train_labels[batch * batch_size : (batch + 1) * batch_size, :]
 
         if batch % 100 == 0:
-            output, cost = forward_prop_batch(dev_data, dev_labels, params, forward_prop_func)
+            output, cost = forward_prop_batch(
+                dev_data, dev_labels, params, forward_prop_func
+            )
             cost_dev.append(sum(cost) / len(cost))
             accuracy_dev.append(compute_accuracy(output, dev_labels))
 
-            print('Costo y accuracy', cost_dev[-1], accuracy_dev[-1])
+            print("Costo y accuracy", cost_dev[-1], accuracy_dev[-1])
 
-        gradient_descent_batch(batch_data, batch_labels,
-            learning_rate, params, backward_prop_func)
+        gradient_descent_batch(
+            batch_data, batch_labels, learning_rate, params, backward_prop_func
+        )
 
     return params, cost_dev, accuracy_dev
+
 
 def nn_test(data, labels, params):
     output, cost = forward_pr(data, labels, params)
     accuracy = compute_accuracy(output, labels)
     return accuracy
 
+
 def compute_accuracy(output, labels):
-    correct_output = np.argmax(output,axis=1)
-    correct_labels = np.argmax(labels,axis=1)
+    correct_output = np.argmax(output, axis=1)
+    correct_labels = np.argmax(labels, axis=1)
 
-    is_correct = [a == b for a,b in zip(correct_output, correct_labels)]
+    is_correct = [a == b for a, b in zip(correct_output, correct_labels)]
 
-    accuracy = sum(is_correct) * 1. / labels.shape[0]
+    accuracy = sum(is_correct) * 1.0 / labels.shape[0]
     return accuracy
+
 
 def one_hot_labels(labels):
     one_hot_labels = np.zeros((labels.size, 10))
-    one_hot_labels[np.arange(labels.size),labels.astype(int)] = 1
+    one_hot_labels[np.arange(labels.size), labels.astype(int)] = 1
     return one_hot_labels
 
+
 def read_data(images_file, labels_file):
-    x = np.loadtxt(images_file, delimiter=',')
-    y = np.loadtxt(labels_file, delimiter=',')
+    x = np.loadtxt(images_file, delimiter=",")
+    y = np.loadtxt(labels_file, delimiter=",")
 
     x = np.reshape(x, (x.shape[0], 1, 28, 28))
 
     return x, y
 
+
 def run_train(all_data, all_labels, backward_prop_func):
     params, cost_dev, accuracy_dev = nn_train(
-        all_data['train'], all_labels['train'],
-        all_data['dev'], all_labels['dev'],
-        get_initial_params, forward_prop, backward_prop_func,
-        learning_rate=1e-2, batch_size=16, num_batches=400
+        all_data["train"],
+        all_labels["train"],
+        all_data["dev"],
+        all_labels["dev"],
+        get_initial_params,
+        forward_prop,
+        backward_prop_func,
+        learning_rate=1e-2,
+        batch_size=16,
+        num_batches=400,
     )
 
     t = np.arange(400 // 100)
 
     fig, (ax1, ax2) = plt.subplots(2, 1)
 
-    ax1.plot(t, cost_dev, 'b')
-    ax1.set_xlabel('tiempo')
-    ax1.set_ylabel('pérdida')
-    ax1.set_title('Curva train')
+    ax1.plot(t, cost_dev, "b")
+    ax1.set_xlabel("tiempo")
+    ax1.set_ylabel("pérdida")
+    ax1.set_title("Curva train")
 
-    ax2.plot(t, accuracy_dev, 'b')
-    ax2.set_xlabel('tiempo')
-    ax2.set_ylabel('accuracy')
+    ax2.plot(t, accuracy_dev, "b")
+    ax2.set_xlabel("tiempo")
+    ax2.set_ylabel("accuracy")
 
-    fig.savefig('output/train.png')
+    fig.savefig("output/train.png")
+
 
 def main():
     np.random.seed(100)
-    train_data, train_labels = read_data('../data/images_train.csv', '../data/labels_train.csv')
+    train_data, train_labels = read_data(
+        "../data/images_train.csv", "../data/labels_train.csv"
+    )
     train_labels = one_hot_labels(train_labels)
     p = np.random.permutation(60000)
-    train_data = train_data[p,:]
-    train_labels = train_labels[p,:]
+    train_data = train_data[p, :]
+    train_labels = train_labels[p, :]
 
-    dev_data = train_data[0:400,:]
-    dev_labels = train_labels[0:400,:]
-    train_data = train_data[400:,:]
-    train_labels = train_labels[400:,:]
+    dev_data = train_data[0:400, :]
+    dev_labels = train_labels[0:400, :]
+    train_data = train_data[400:, :]
+    train_labels = train_labels[400:, :]
 
     mean = np.mean(train_data)
     std = np.std(train_data)
@@ -475,16 +537,17 @@ def main():
     dev_data = (dev_data - mean) / std
 
     all_data = {
-        'train': train_data,
-        'dev': dev_data,
+        "train": train_data,
+        "dev": dev_data,
     }
 
     all_labels = {
-        'train': train_labels,
-        'dev': dev_labels,
+        "train": train_labels,
+        "dev": dev_labels,
     }
-    
+
     run_train(all_data, all_labels, backward_prop)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()
