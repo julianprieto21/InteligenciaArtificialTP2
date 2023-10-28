@@ -9,7 +9,7 @@ CONVOLUTION_FILTERS = 2
 # Consultas
 #
 # 1. ¿Que es exactamente lo que pide el punto 2?
-# 2. ¿Como devolver un gradiente de la perdida con respecto a x
+# 2. ¿Como devolver un gradiente de la perdida con respecto a x1
 
 
 def forward_softmax(x):
@@ -49,6 +49,10 @@ def backward_softmax(x, grad_outputs):
 
     # *** EMPEZAR CÓDIGO AQUÍ ***
 
+    softmax_x = forward_softmax(x)
+    grad = softmax_x * (grad_outputs - np.dot(grad_outputs, softmax_x))
+    return grad
+
     # *** TERMINAR CÓDIGO AQUÍ ***
 
 
@@ -81,6 +85,11 @@ def backward_relu(x, grad_outputs):
     """
 
     # *** EMPEZAR CÓDIGO AQUÍ ***
+
+    grad = np.zeros_like(x)
+    grad[x > 0] = grad_outputs[x > 0]
+    return grad
+
     # *** TERMINAR CÓDIGO AQUÍ ***
 
 
@@ -265,6 +274,10 @@ def backward_cross_entropy_loss(probabilities, labels):
     """
 
     # *** EMPEZAR CÓDIGO AQUÍ ***
+
+    grad = -labels / probabilities
+    return grad
+
     # *** TERMINAR CÓDIGO AQUÍ ***
 
 
@@ -456,7 +469,7 @@ def nn_train(
 
 
 def nn_test(data, labels, params):
-    output, cost = forward_pr(data, labels, params)
+    output, cost = forward_prop(data, labels, params)
     accuracy = compute_accuracy(output, labels)
     return accuracy
 
