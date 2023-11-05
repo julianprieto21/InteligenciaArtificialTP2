@@ -563,4 +563,8 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    # main()
+    grad = np.array([2, 1, 3, 2])
+    x = np.array([1, 2, 3, 4])
+    o = backward_softmax(x, grad)
+    print(o)
