@@ -189,6 +189,26 @@ def backward_convolution(conv_W, conv_b, data, output_grad):
 
 
 # *** EMPEZAR CÓDIGO AQUÍ ***
+    conv_channels, _, conv_width, conv_height = conv_W.shape
+    input_channels, input_width, input_height = data.shape
+    output_width, output_height = output_grad.shape[1], output_grad.shape[2]
+
+    grad_W = np.zeros_like(conv_W)
+    grad_b = np.zeros_like(conv_b)
+    grad_x = np.zeros_like(data)
+
+    for x in range(output_width):
+        for y in range(output_height):
+            for output_channel in range(conv_channels):
+                # Gradiente con respecto a pesos
+                grad_W[output_channel] += data[:, x : (x + conv_width), y : (y + conv_height)] * output_grad[output_channel, x, y]
+                # Gradiente con respecto a los bias
+                grad_b[output_channel] += output_grad[output_channel, x, y]
+                # Gradiente con respecto a X´s
+                grad_x[:, x : (x + conv_width), y : (y + conv_height)] += conv_W[output_channel] * output_grad[output_channel, x, y]
+
+    return [grad_W, grad_b, grad_x]
+
 # *** TERMINAR CÓDIGO AQUÍ ***
 
 
@@ -235,6 +255,22 @@ def backward_max_pool(data, pool_width, pool_height, output_grad):
     """
 
     # *** EMPEZAR CÓDIGO AQUÍ ***
+
+    input_channels, input_width, input_height = data.shape
+    output_width, output_height = output_grad.shape[1], output_grad.shape[2]
+
+    grad_x = np.zeros(data.shape)
+
+    for x in range(output_width):
+        for y in range(output_height):
+            for c in range(input_channels):
+                region = data[c, x * pool_width : (x+1) * pool_width, y * pool_height : (y+1) * pool_height]
+                # Se encuentra la posición del valor máximo en esa región
+                max_pos = np.unravel_index(region.argmax(), region.shape)
+                grad_x[c, x * pool_width + max_pos[0], y * pool_height + max_pos[1]] = output_grad[c, x, y]
+
+    return grad_x
+
     # *** TERMINAR CÓDIGO AQUÍ ***
 
 
@@ -311,6 +347,12 @@ def backward_linear(weights, bias, data, output_grad):
     """
 
     # *** EMPEZAR CÓDIGO AQUÍ ***
+
+    grad_weights = data.T.dot(output_grad)
+    grad_bias = output_grad
+    grad_data = output_grad.dot(weights.T)
+
+    return [grad_weights, grad_bias, grad_data]
     # *** TERMINAR CÓDIGO AQUÍ ***
 
 
