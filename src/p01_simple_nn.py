@@ -33,9 +33,9 @@ def foward_segunda_capa(A1):
 
 
 # test
-x = np.random.randn(2)  # 2x1
+# x = np.random.randn(2)  # 2x1
 
-A1 = foward_primer_capa(x)
-A2 = foward_segunda_capa(A1)
+# A1 = foward_primer_capa(x)
+# A2 = foward_segunda_capa(A1)
 
-print(A2)
+# print(A2)

@@ -6,92 +6,6 @@ MAX_POOL_SIZE = 5
 CONVOLUTION_SIZE = 4
 CONVOLUTION_FILTERS = 2
 
-# Consultas
-#
-# 1. ¿Que es exactamente lo que pide el punto 2?
-# 2. ¿Como devolver un gradiente de la perdida con respecto a x1
-
-
-def forward_softmax(x):
-    """
-    Calcula la función softmax para un solo ejemplo.
-    El tamaño de la entrada es # clases.
-
-    Nota importante: debe tener cuidado para evitar el overflow de esta función. Funciones
-    como softmax tienen tendencia a overflow cuando se calculan números muy grandes como e^10000.
-    Sabrá que su función es resistente al overflow cuando puede manejar entradas como:
-    np.array([[10000, 10010, 10]]) sin problemas.
-
-        x: un array de floats numpy 1d de tamaño #clases
-
-    Salida:
-        un array de floats numpy 1d  que contiene los resultados de softmax.
-    """
-    x = x - np.max(x, axis=0)
-    exp = np.exp(x)
-    s = exp / np.sum(exp, axis=0)
-    return s
-
-
-def backward_softmax(x, grad_outputs):
-    """
-    Calcule el gradiente de la pérdida con respecto a x.
-
-    grad_outputs es el gradiente de la pérdida con respecto a las salidas del softmax.
-
-    Argumentos:
-        x: un vector floats numpy 1d de tamaño #clases
-        grad_outputs: un vector floats numpy 1d de de tamaño #clases
-
-    Salida:
-        un vector floats numpy 1d de la misma forma que x con la derivada de la pérdida con respecto a x
-    """
-
-    # *** EMPEZAR CÓDIGO AQUÍ ***
-
-    softmax_x = forward_softmax(x)
-    grad = softmax_x * (grad_outputs - np.dot(grad_outputs, softmax_x))
-    return grad
-
-    # *** TERMINAR CÓDIGO AQUÍ ***
-
-
-def forward_relu(x):
-    """
-    Calcula la ReLU para x.
-
-    Args:
-        x: un vector floats numpy
-
-    Return:
-        un vector floats numpy con el resultado de ReLU
-    """
-    x[x <= 0] = 0
-
-    return x
-
-
-def backward_relu(x, grad_outputs):
-    """
-    Calcula el gradiente de la pérdida resp a x
-
-    Args:
-        x: un array de numpy de tamaño arbitrario.
-        grad_outputs: un array de numpy del mismo tamaño que x que contiene el gradiente de la pérdida con respecto
-            a la salida de relu
-
-    Return:
-        Un array numpy del mismo tamaño que x que contiene los gradientes con respecto a x.
-    """
-
-    # *** EMPEZAR CÓDIGO AQUÍ ***
-
-    grad = np.zeros_like(x)
-    grad[x > 0] = grad_outputs[x > 0]
-    return grad
-
-    # *** TERMINAR CÓDIGO AQUÍ ***
-
 
 def get_initial_params():
     """
@@ -174,6 +88,7 @@ def forward_convolution(conv_W, conv_b, data):
 
 
 def backward_convolution(conv_W, conv_b, data, output_grad):
+    print("Backward Convolution")
     """
     Calcula el gradiente de la pérdida con respecto a los parámetros de la convolución.
 
@@ -189,6 +104,7 @@ def backward_convolution(conv_W, conv_b, data, output_grad):
 
 
 # *** EMPEZAR CÓDIGO AQUÍ ***
+
     conv_channels, _, conv_width, conv_height = conv_W.shape
     input_channels, input_width, input_height = data.shape
     output_width, output_height = output_grad.shape[1], output_grad.shape[2]
@@ -242,6 +158,7 @@ def forward_max_pool(data, pool_width, pool_height):
 
 
 def backward_max_pool(data, pool_width, pool_height, output_grad):
+    print("Backward MaxPooling")
     """
     Calcule el gradiente de la pérdida con respecto a los datos en la capa max pooling.
 
@@ -274,6 +191,128 @@ def backward_max_pool(data, pool_width, pool_height, output_grad):
     # *** TERMINAR CÓDIGO AQUÍ ***
 
 
+def forward_relu(x):
+    """
+    Calcula la ReLU para x.
+
+    Args:
+        x: un vector floats numpy
+
+    Return:
+        un vector floats numpy con el resultado de ReLU
+    """
+    x[x <= 0] = 0
+
+    return x
+
+
+def backward_relu(x, grad_outputs):
+    print("Backward ReLu")
+    """
+    Calcula el gradiente de la pérdida resp a x
+
+    Args:
+        x: un array de numpy de tamaño arbitrario.
+        grad_outputs: un array de numpy del mismo tamaño que x que contiene el gradiente de la pérdida con respecto
+            a la salida de relu
+
+    Return:
+        Un array numpy del mismo tamaño que x que contiene los gradientes con respecto a x.
+    """
+
+    # *** EMPEZAR CÓDIGO AQUÍ ***
+
+    grad = np.zeros_like(x)
+    grad[x > 0] = grad_outputs[x > 0]
+    return grad
+
+    # *** TERMINAR CÓDIGO AQUÍ ***
+
+
+def forward_linear(weights, bias, data):
+    """
+    Calcule la salida de una capa lineal con los pesos, el bias y los datos proporcionados.
+    pesos de tamaño (# características de entrada, # características de de salida)
+    el bias de tamaño (# características de de salida)
+    los datos de tamaño (# características de entrada)
+
+    La salida debe tener tamaño (# características de de salida)
+
+    Returns:
+        El resultado de la capa lineal.
+    """
+    return data.dot(weights) + bias
+
+
+def backward_linear(weights, bias, data, output_grad):
+    print("Backward Linear")
+    """
+    Calcula los gradientes de pérdida con respecto a los parámetros de una capa lineal.
+
+    Consulte forward_linear para obtener información sobre los tamaños de las variables.
+
+    output_grad es el gradiente de la pérdida con respecto a la salida de esta capa.
+
+    Esto debería devolver una tupla con tres elementos:
+    - El gradiente de la pérdida con respecto a los pesos
+    - El gradiente de la pérdida con respecto al bias
+    - El gradiente de la pérdida con respecto a los datos
+    """
+
+    # *** EMPEZAR CÓDIGO AQUÍ ***
+    grad_weights = data.T.dot(output_grad)
+    grad_bias = output_grad
+    grad_data = output_grad.dot(weights.T)
+
+    return [grad_weights, grad_bias, grad_data]
+
+    # *** TERMINAR CÓDIGO AQUÍ ***
+
+def forward_softmax(x):
+    """
+    Calcula la función softmax para un solo ejemplo.
+    El tamaño de la entrada es # clases.
+
+    Nota importante: debe tener cuidado para evitar el overflow de esta función. Funciones
+    como softmax tienen tendencia a overflow cuando se calculan números muy grandes como e^10000.
+    Sabrá que su función es resistente al overflow cuando puede manejar entradas como:
+    np.array([[10000, 10010, 10]]) sin problemas.
+
+        x: un array de floats numpy 1d de tamaño #clases
+
+    Salida:
+        un array de floats numpy 1d  que contiene los resultados de softmax.
+    """
+    x = x - np.max(x, axis=0)
+    exp = np.exp(x)
+    s = exp / np.sum(exp, axis=0)
+    return s
+
+
+def backward_softmax(x, grad_outputs):
+    print("Backward Softmax")
+    """
+    Calcule el gradiente de la pérdida con respecto a x.
+
+    grad_outputs es el gradiente de la pérdida con respecto a las salidas del softmax.
+
+    Argumentos:
+        x: un vector floats numpy 1d de tamaño #clases
+        grad_outputs: un vector floats numpy 1d de de tamaño #clases
+
+    Salida:
+        un vector floats numpy 1d de la misma forma que x con la derivada de la pérdida con respecto a x
+    """
+
+    # *** EMPEZAR CÓDIGO AQUÍ ***
+
+    softmax_x = forward_softmax(x)
+    grad = softmax_x * (grad_outputs - np.dot(grad_outputs, softmax_x))
+    return grad
+
+    # *** TERMINAR CÓDIGO AQUÍ ***
+
+
 def forward_cross_entropy_loss(probabilities, labels):
     """
     Calcule la salida de una capa de entropía cruzada dadas las probabilidades y las etiquetas.
@@ -297,6 +336,7 @@ def forward_cross_entropy_loss(probabilities, labels):
 
 
 def backward_cross_entropy_loss(probabilities, labels):
+    print("Backward Cross Entropy Loss")
     """
     Calcule el gradiente de la entropía cruzada con respecto a las probabilidades.
 
@@ -310,49 +350,9 @@ def backward_cross_entropy_loss(probabilities, labels):
     """
 
     # *** EMPEZAR CÓDIGO AQUÍ ***
-
     grad = -labels / probabilities
     return grad
 
-    # *** TERMINAR CÓDIGO AQUÍ ***
-
-
-def forward_linear(weights, bias, data):
-    """
-    Calcule la salida de una capa lineal con los pesos, el bias y los datos proporcionados.
-    pesos de tamaño (# características de entrada, # características de de salida)
-    el bias de tamaño (# características de de salida)
-    los datos de tamaño (# características de entrada)
-
-    La salida debe tener tamaño (# características de de salida)
-
-    Returns:
-        El resultado de la capa lineal.
-    """
-    return data.dot(weights) + bias
-
-
-def backward_linear(weights, bias, data, output_grad):
-    """
-    Calcula los gradientes de pérdida con respecto a los parámetros de una capa lineal.
-
-    Consulte forward_linear para obtener información sobre los tamaños de las variables.
-
-    output_grad es el gradiente de la pérdida con respecto a la salida de esta capa.
-
-    Esto debería devolver una tupla con tres elementos:
-    - El gradiente de la pérdida con respecto a los pesos
-    - El gradiente de la pérdida con respecto al bias
-    - El gradiente de la pérdida con respecto a los datos
-    """
-
-    # *** EMPEZAR CÓDIGO AQUÍ ***
-
-    grad_weights = data.T.dot(output_grad)
-    grad_bias = output_grad
-    grad_data = output_grad.dot(weights.T)
-
-    return [grad_weights, grad_bias, grad_data]
     # *** TERMINAR CÓDIGO AQUÍ ***
 
 
@@ -378,22 +378,29 @@ def forward_prop(data, labels, params):
     b1 = params["b1"]
     W2 = params["W2"]
     b2 = params["b2"]
-
+    # print('data:', data.shape)
     first_convolution = forward_convolution(W1, b1, data)
+    # print('conv:', first_convolution.shape)
     first_max_pool = forward_max_pool(first_convolution, MAX_POOL_SIZE, MAX_POOL_SIZE)
+    # print('max pool:', first_max_pool.shape)
     first_after_relu = forward_relu(first_max_pool)
+    # print('relu:', first_after_relu.shape)
 
     flattened = np.reshape(first_after_relu, (-1))
+    # print('flattened:', flattened.shape)
 
     logits = forward_linear(W2, b2, flattened)
+    # print('logits:', logits.shape)
 
     y = forward_softmax(logits)
+    # print('y:', y.shape)
     cost = forward_cross_entropy_loss(y, labels)
 
     return y, cost
 
 
 def backward_prop(data, labels, params):
+    print("Backward Propagation")
     """
     Implementar el cálculo del gradiente para una red neuronal. Es decir la pasada backward completa.
 
@@ -414,6 +421,41 @@ def backward_prop(data, labels, params):
     """
 
     # *** EMPEZAR CÓDIGO AQUÍ ***
+
+    W1 = params["W1"]
+    b1 = params["b1"]
+    W2 = params["W2"]
+    b2 = params["b2"]
+    print('data:', data.shape)
+    y, cost = forward_prop(data, labels, params)
+    print('y:', y.shape)
+    grad_softmax = backward_cross_entropy_loss(y, labels)
+    print('grad_CE:', grad_softmax.shape)
+    grad_logits = backward_softmax(y, grad_softmax)
+    print('grad_softmax:', grad_logits.shape)
+    grad_W2, grad_b2, grad_relu = backward_linear(W2, b2, y, grad_logits)
+    print('grad_W2:', grad_W2.shape)
+    print('grad_b2:', grad_b2.shape)
+    print('grad_relu:', grad_relu.shape)    
+
+    grad_max_pool = backward_relu(grad_relu, grad_relu).reshape(CONVOLUTION_FILTERS, MAX_POOL_SIZE, MAX_POOL_SIZE)
+    print('grad_max_pool:', grad_max_pool.shape)
+    grad_convolution = backward_max_pool(data, MAX_POOL_SIZE, MAX_POOL_SIZE, grad_max_pool)
+    print('grad_convolution:', grad_convolution.shape)
+    grad_W1, grad_b1, grad_data = backward_convolution(W1, b1, data, grad_convolution)
+    print('grad_W1:', grad_W1.shape)
+    print('grad_b1:', grad_b1.shape)
+    print('grad_data:', grad_data.shape)
+
+    gradientes = {
+        'W1': grad_W1,
+        'b1': grad_b1,
+        'W2': grad_W2,
+        'b2': grad_b2
+    }
+
+    return gradientes
+
     # *** TERMINAR CÓDIGO AQUÍ ***
 
 
@@ -574,7 +616,7 @@ def run_train(all_data, all_labels, backward_prop_func):
 def main():
     np.random.seed(100)
     train_data, train_labels = read_data(
-        "../data/images_train.csv", "../data/labels_train.csv"
+        "./data/images_train.csv", "./data/labels_train.csv"
     )
     train_labels = one_hot_labels(train_labels)
     p = np.random.permutation(60000)
@@ -605,8 +647,4 @@ def main():
 
 
 if __name__ == "__main__":
-    # main()
-    grad = np.array([2, 1, 3, 2])
-    x = np.array([1, 2, 3, 4])
-    o = backward_softmax(x, grad)
-    print(o)
+    main()
