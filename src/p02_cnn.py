@@ -88,7 +88,6 @@ def forward_convolution(conv_W, conv_b, data):
 
 
 def backward_convolution(conv_W, conv_b, data, output_grad):
-    print("Backward Convolution")
     """
     Calcula el gradiente de la pérdida con respecto a los parámetros de la convolución.
 
@@ -107,23 +106,23 @@ def backward_convolution(conv_W, conv_b, data, output_grad):
 
     conv_channels, _, conv_width, conv_height = conv_W.shape
     input_channels, input_width, input_height = data.shape
-    output_width, output_height = output_grad.shape[1], output_grad.shape[2]
+    # output_width, output_height = output_grad.shape[1], output_grad.shape[2]
 
     grad_W = np.zeros_like(conv_W)
     grad_b = np.zeros_like(conv_b)
     grad_x = np.zeros_like(data)
 
-    for x in range(output_width):
-        for y in range(output_height):
+    for x in range(input_width - conv_width + 1):#range(output_width):
+        for y in range(input_height - conv_height + 1):#range(output_height):
             for output_channel in range(conv_channels):
                 # Gradiente con respecto a pesos
-                grad_W[output_channel] += data[:, x : (x + conv_width), y : (y + conv_height)] * output_grad[output_channel, x, y]
+                grad_W[output_channel, :, :, :] += data[:, x : (x + conv_width), y : (y + conv_height)] * output_grad[output_channel, x, y]
                 # Gradiente con respecto a los bias
                 grad_b[output_channel] += output_grad[output_channel, x, y]
                 # Gradiente con respecto a X´s
-                grad_x[:, x : (x + conv_width), y : (y + conv_height)] += conv_W[output_channel] * output_grad[output_channel, x, y]
+                grad_x[:, x : (x + conv_width), y : (y + conv_height)] += conv_W[output_channel, :, :, :] * output_grad[output_channel, x, y]
 
-    return [grad_W, grad_b, grad_x]
+    return grad_W, grad_b, grad_x
 
 # *** TERMINAR CÓDIGO AQUÍ ***
 
@@ -158,7 +157,6 @@ def forward_max_pool(data, pool_width, pool_height):
 
 
 def backward_max_pool(data, pool_width, pool_height, output_grad):
-    print("Backward MaxPooling")
     """
     Calcule el gradiente de la pérdida con respecto a los datos en la capa max pooling.
 
@@ -176,15 +174,18 @@ def backward_max_pool(data, pool_width, pool_height, output_grad):
     input_channels, input_width, input_height = data.shape
     output_width, output_height = output_grad.shape[1], output_grad.shape[2]
 
-    grad_x = np.zeros(data.shape)
+    grad_x = np.zeros((CONVOLUTION_FILTERS, output_width * 5, output_height * 5))
 
-    for x in range(output_width):
-        for y in range(output_height):
-            for c in range(input_channels):
-                region = data[c, x * pool_width : (x+1) * pool_width, y * pool_height : (y+1) * pool_height]
-                # Se encuentra la posición del valor máximo en esa región
-                max_pos = np.unravel_index(region.argmax(), region.shape)
-                grad_x[c, x * pool_width + max_pos[0], y * pool_height + max_pos[1]] = output_grad[c, x, y]
+    for x in range(0, input_width - pool_width, pool_width):#range(output_width):
+        for y in range(0, input_height - pool_height, pool_height):#range(output_height):
+            ## region = data[:, x * pool_width : (x+1) * pool_width, y * pool_height : (y+1) * pool_height]
+            # max_pos = np.unravel_index(region.argmax(), region.shape)
+            # print(max_pos)
+            # grad_x[:, x * pool_width + max_pos[0], y * pool_height + max_pos[1]] = output_grad[:, x // pool_width, y // pool_height]
+            pool_region = data[:, x:(x + pool_width), y:(y + pool_height)]
+            mask = (pool_region == np.amax(pool_region, axis=(1, 2))[:, None, None])
+            grad_x[:, x:(x + pool_width), y:(y + pool_height)] += output_grad[:, x // pool_width, y // pool_height][:, None, None] * mask
+                
 
     return grad_x
 
@@ -207,7 +208,6 @@ def forward_relu(x):
 
 
 def backward_relu(x, grad_outputs):
-    print("Backward ReLu")
     """
     Calcula el gradiente de la pérdida resp a x
 
@@ -224,8 +224,9 @@ def backward_relu(x, grad_outputs):
 
     grad = np.zeros_like(x)
     grad[x > 0] = grad_outputs[x > 0]
-    return grad
-
+    # return grad
+    return grad_outputs * (x > 0).astype(float) # Mismo calculo que arriba
+ 
     # *** TERMINAR CÓDIGO AQUÍ ***
 
 
@@ -245,7 +246,6 @@ def forward_linear(weights, bias, data):
 
 
 def backward_linear(weights, bias, data, output_grad):
-    print("Backward Linear")
     """
     Calcula los gradientes de pérdida con respecto a los parámetros de una capa lineal.
 
@@ -261,7 +261,7 @@ def backward_linear(weights, bias, data, output_grad):
 
     # *** EMPEZAR CÓDIGO AQUÍ ***
     grad_weights = data.T.dot(output_grad)
-    grad_bias = output_grad
+    grad_bias =  output_grad #np.sum(output_grad, axis=0)
     grad_data = output_grad.dot(weights.T)
 
     return [grad_weights, grad_bias, grad_data]
@@ -290,7 +290,6 @@ def forward_softmax(x):
 
 
 def backward_softmax(x, grad_outputs):
-    print("Backward Softmax")
     """
     Calcule el gradiente de la pérdida con respecto a x.
 
@@ -308,7 +307,8 @@ def backward_softmax(x, grad_outputs):
 
     softmax_x = forward_softmax(x)
     grad = softmax_x * (grad_outputs - np.dot(grad_outputs, softmax_x))
-    return grad
+    # return grad
+    return grad_outputs * (softmax_x * (1-softmax_x)) # Mismo calculo que arriba
 
     # *** TERMINAR CÓDIGO AQUÍ ***
 
@@ -336,7 +336,6 @@ def forward_cross_entropy_loss(probabilities, labels):
 
 
 def backward_cross_entropy_loss(probabilities, labels):
-    print("Backward Cross Entropy Loss")
     """
     Calcule el gradiente de la entropía cruzada con respecto a las probabilidades.
 
@@ -350,6 +349,14 @@ def backward_cross_entropy_loss(probabilities, labels):
     """
 
     # *** EMPEZAR CÓDIGO AQUÍ ***
+
+    # Introducir una pequeña constante para evitar divisiones por cero
+    # epsilon = 1e-10
+
+    # Utilizar np.clip para evitar que las probabilidades sean extremadamente cercanas a cero
+    # probabilities = np.clip(probabilities, epsilon, 1 - epsilon)
+
+    # print(probabilities)
     grad = -labels / probabilities
     return grad
 
@@ -379,28 +386,36 @@ def forward_prop(data, labels, params):
     W2 = params["W2"]
     b2 = params["b2"]
     # print('data:', data.shape)
+    # print(data)
+    # print(W1.shape, b1.shape)
+    # print(W2.shape, b2.shape)
     first_convolution = forward_convolution(W1, b1, data)
     # print('conv:', first_convolution.shape)
+    # print(first_convolution)
     first_max_pool = forward_max_pool(first_convolution, MAX_POOL_SIZE, MAX_POOL_SIZE)
     # print('max pool:', first_max_pool.shape)
+    # print(first_max_pool)
     first_after_relu = forward_relu(first_max_pool)
     # print('relu:', first_after_relu.shape)
+    # print(first_after_relu)
 
     flattened = np.reshape(first_after_relu, (-1))
     # print('flattened:', flattened.shape)
+    # print(flattened)
 
     logits = forward_linear(W2, b2, flattened)
     # print('logits:', logits.shape)
+    # print(logits)
 
     y = forward_softmax(logits)
     # print('y:', y.shape)
+    # print(y)
     cost = forward_cross_entropy_loss(y, labels)
 
     return y, cost
 
 
 def backward_prop(data, labels, params):
-    print("Backward Propagation")
     """
     Implementar el cálculo del gradiente para una red neuronal. Es decir la pasada backward completa.
 
@@ -426,26 +441,33 @@ def backward_prop(data, labels, params):
     b1 = params["b1"]
     W2 = params["W2"]
     b2 = params["b2"]
-    print('data:', data.shape)
+    # print('data:', data.shape)
     y, cost = forward_prop(data, labels, params)
-    print('y:', y.shape)
+
+    # print('y:', y.shape)
+    # print(y)
     grad_softmax = backward_cross_entropy_loss(y, labels)
-    print('grad_CE:', grad_softmax.shape)
+    # print('grad_CE:', grad_softmax.shape)
+    # print(grad_softmax)
     grad_logits = backward_softmax(y, grad_softmax)
-    print('grad_softmax:', grad_logits.shape)
+    # print('grad_softmax:', grad_logits.shape)
+    # print(grad_logits)
     grad_W2, grad_b2, grad_relu = backward_linear(W2, b2, y, grad_logits)
-    print('grad_W2:', grad_W2.shape)
-    print('grad_b2:', grad_b2.shape)
-    print('grad_relu:', grad_relu.shape)    
+    # print('grad_W2:', grad_W2.shape)
+    # print('grad_b2:', grad_b2.shape)
+    # print('grad_relu:', grad_relu.shape)   
+    # print(grad_relu) 
 
     grad_max_pool = backward_relu(grad_relu, grad_relu).reshape(CONVOLUTION_FILTERS, MAX_POOL_SIZE, MAX_POOL_SIZE)
-    print('grad_max_pool:', grad_max_pool.shape)
+    # print('grad_max_pool:', grad_max_pool.shape)
+    # print(grad_max_pool)
     grad_convolution = backward_max_pool(data, MAX_POOL_SIZE, MAX_POOL_SIZE, grad_max_pool)
-    print('grad_convolution:', grad_convolution.shape)
+    # print('grad_convolution:', grad_convolution.shape)
+    # print(grad_convolution)
     grad_W1, grad_b1, grad_data = backward_convolution(W1, b1, data, grad_convolution)
-    print('grad_W1:', grad_W1.shape)
-    print('grad_b1:', grad_b1.shape)
-    print('grad_data:', grad_data.shape)
+    # print('grad_W1:', grad_W1.shape)
+    # print('grad_b1:', grad_b1.shape)
+    # print('grad_data:', grad_data.shape)
 
     gradientes = {
         'W1': grad_W1,
@@ -540,6 +562,7 @@ def nn_train(
             output, cost = forward_prop_batch(
                 dev_data, dev_labels, params, forward_prop_func
             )
+            print(sum(cost), len(cost))
             cost_dev.append(sum(cost) / len(cost))
             accuracy_dev.append(compute_accuracy(output, dev_labels))
 
