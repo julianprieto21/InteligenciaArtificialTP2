@@ -4,7 +4,7 @@ import os
 
 PLOT_COLORS = ['red', 'green', 'blue', 'orange']  # Colors para los gráficos
 K = 4           # cantida de gaussianas mezcladas
-NUM_TRIALS = 3  # cantidad de corridas (se puede modificar para debugging)
+NUM_TRIALS = 1  # cantidad de corridas (se puede modificar para debugging)
 UNLABELED = -1  # etiqueta para los datos no etiquetados (no cambiar)
 
 
@@ -13,7 +13,7 @@ def main(is_semi_supervised, trial_num):
           .format('semi-supervisado' if is_semi_supervised else 'no supervisado'))
 
     # Cargar dataset
-    train_path = os.path.join('..', 'data', 'ds3_train.csv')
+    train_path = os.path.join('.', 'data', 'ds3_train.csv')
     x, z = load_gmm_dataset(train_path)
     x_tilde = None
 
@@ -27,10 +27,28 @@ def main(is_semi_supervised, trial_num):
     # *** EMPEZAR CÓDIGO AQUÍ ***
     # (1) Inicialice mu y sigma dividiendo los m datos uniformemente al azar
     # en K grupos, luego calculando la media de la muestra y la covarianza para cada grupo
+    mu = np.zeros((K, x.shape[1]))
+    sigma = np.zeros((K, x.shape[1], x.shape[1]))
+    for i in range(K):
+        idx = np.random.choice(x.shape[0], size=x.shape[0] // K, replace=False) # Elijo una muestra al azar de mis datos
+        mu[i] = np.mean(x[idx], axis=0) # Calculo la media
+        sigma[i] = np.cov(x[idx].T) # Y la covarianza
+
     # (2) Inicialice phi para colocar la misma probabilidad en cada gaussiana
     # phi debe ser un array numpy de tamaño (K,)
+    phi = np.ones(K) / K
+
     # (3) Inicialice los valores de w para colocar la misma probabilidad en cada gaussiana
     # w debe ser un array numpy de tamaño (m, K)
+    w = np.zeros((x.shape[0], K))
+    for i in range(x.shape[0]):
+        w[i, :] = phi
+
+    # print(mu.shape)
+    # print(sigma.shape)
+    # print(phi.shape)
+    # print(w.shape)
+
     # *** TERMINAR CÓDIGO AQUÍ ***
 
     if is_semi_supervised:
@@ -39,12 +57,12 @@ def main(is_semi_supervised, trial_num):
         w = run_em(x, w, phi, mu, sigma)
 
     # graficar predicciones
-    z_pred = np.zeros(m)
-    if w is not None:  # solamente para código de inicio. Cambiar según corresponda.
-        for i in range(m):
-            z_pred[i] = np.argmax(w[i])
+    # z_pred = np.zeros(m)
+    # if w is not None:  # solamente para código de inicio. Cambiar según corresponda.
+    #     for i in range(m):
+    #         z_pred[i] = np.argmax(w[i])
 
-    plot_gmm_preds(x, z_pred, is_semi_supervised, plot_id=trial_num)
+    # plot_gmm_preds(x, z_pred, is_semi_supervised, plot_id=trial_num)
 
 
 def run_em(x, w, phi, mu, sigma):
@@ -66,19 +84,31 @@ def run_em(x, w, phi, mu, sigma):
     # No es necesario cambiar ninguno de estos parámetros.
     eps = 1e-3  # umbral de convergencia
     max_iter = 1000
+    m = x.shape[1]
 
     # parar cuando el cambio absoluto en log-verosimilitud sea < eps.
     it = 0
     ll = prev_ll = None
     while it < max_iter and (prev_ll is None or np.abs(ll - prev_ll) >= eps):
-        pass  # solamente para código inicial. Cambiar según corresponda.
+        # pass  # solamente para código inicial. Cambiar según corresponda.
         # *** EMPEZAR CÓDIGO AQUÍ ***
         # (1) E-step: actualice sus estimaciones en w
+        
+
         # (2) M-step: actualice los parámetros del modelo phi, mu y sigma
+        phi = 1/m * np.sum(w, axis=0)
+        print(x.shape)
+        print(w.shape)
+        mu = (w.T @ x) / w
+        print(mu.shape)
+        sigma = np.sum(w * np.outer(x - mu, x - mu), axis=0) / np.sum(w, axis=0) # ?
+
         # (3) Calcule la log probabilidad (log likelihood = ll) de los datos para verificar la convergencia.
         # Por log-verosimilitud, nos referimos a `ll = sum_x[log(sum_z[p(x|z) * p(z)])]`.
         # Definimos la convergencia por abs(ll - prev_ll) < eps.
         # Sugerencia: para debugging, recuerde que ll debería ser monótonamente creciente.
+        
+
         # *** TERMINAR CÓDIGO AQUÍ ***
 
     return w
